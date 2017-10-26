@@ -24,4 +24,4 @@ address = str(address_unicode)
 sec = '04' + hex_x + hex_y
 sec_bin = unhexlify(sec)
 h160 = hash160(sec_bin)
-addres  = str(b2a_hashed_base58(chr(0x6f) + h160))
+address  = str(b2a_hashed_base58(chr(0x6f) + h160))
