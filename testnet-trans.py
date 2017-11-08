@@ -92,7 +92,7 @@ if __name__ == '__main__':
     print(tx_to_hash)
 
     # Determine pubkey from secret
-    secret = 22334455
+    secret = 1
     x, y = (secret * g).pair()
     pub = g.__class__(g.curve(), x, y)
     hex_x = hex(x)
