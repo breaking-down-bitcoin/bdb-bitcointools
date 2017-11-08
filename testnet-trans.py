@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 '''
 Block Explorer			https://www.blocktrail.com/tBTC/tx/3c2a93844cb0df2ebfae65afbba3c73206c4e60797e59401c3860f3c521af916
-Jimmy's pub address 		mnrVtF8DWjMu839VW3rBfgYaAfKk8983Xf 0.05 TBTC
+Send to pub address 	mnrVtF8DWjMu839VW3rBfgYaAfKk8983Xf 0.05 TBTC
 Mine pub address 		mo3kHhHn6ixsXy8LGcdY2zW2QkE8FmhsFH 0.04 TBTC
 '''
 from binascii import hexlify, unhexlify
@@ -20,7 +20,7 @@ def prepend_byte_len_hex(string_of_bytes):
 
 
 if __name__ == '__main__':
-    prev_hash = '3c2a93844cb0df2ebfae65afbba3c73206c4e60797e59401c3860f3c521af916'		#TX ID
+    prev_hash = '3f7352324c97313dfb36c7d2234aef84708ab48739aee4a38b6ffc884dcdeb76'		#TX ID
     print('Prev hash: {}'.format(prev_hash))
 
     prev_hash_le = hexlify(unhexlify(prev_hash)[::-1])	#LE TX ID
@@ -31,16 +31,16 @@ if __name__ == '__main__':
 
     # ADDRESS TO PUB KEY IN HEX
 
-    address_jimmy = 'mnrVtF8DWjMu839VW3rBfgYaAfKk8983Xf'			#JIMMY's ADDRESS (SEND TO)
-    print('Jimmys address: {}'.format(address_jimmy))
+    address_send_to = 'mfZ18J7nP5t4L1F79Mu9jhVzMfBxDKifLk'			#Send TO ADDRESS
+    print('Send to address: {}'.format(address_send_to))
 
-    pub_key_jimmy_hex = hexlify(a2b_hashed_base58(address_jimmy)[1:])	#'507b27411ccf7f16f10297de6cef3f291623eddf' [1:] trims the mainnet\testnet prefix
-    print('Jimmys pub key hex: {}'.format(pub_key_jimmy_hex))
+    pub_key_send_to_hex = hexlify(a2b_hashed_base58(address_send_to)[1:])
+    print('Send to pub key hex: {}'.format(pub_key_send_to_hex))
 
     address_mine = 'mo3kHhHn6ixsXy8LGcdY2zW2QkE8FmhsFH'				#MY ADDRESS
     print('My address: {}'.format(address_mine))
 
-    pub_key_mine_hex = hexlify(a2b_hashed_base58(address_mine)[1:])		#'529bc0c79c396b62ecc31223702515484c626b1b' [1:] trims the mainnet\testnet prefix
+    pub_key_mine_hex = hexlify(a2b_hashed_base58(address_mine)[1:])
     print('My pub key hex: {}'.format(pub_key_mine_hex))
 
     print()
@@ -57,10 +57,11 @@ if __name__ == '__main__':
 
     print('Prev tx hash LE: {}'.format(prev_hash_le.decode()))
 
-    prev_index = '01000000'
+    prev_index = '00000000'
     print('Prev tx output index: {}'.format(prev_index))
 
-    scriptpubkey_prev_tx = '1976a914529bc0c79c396b62ecc31223702515484c626b1b88ac'
+    scriptpubkey_prev_tx = '1976a914' + str(pub_key_mine_hex.decode()) + '88ac'
+
     sighash_all_postsign = '01' # not used for signing, appended to scriptsig after signing
 
     seq = 'ffffffff'
@@ -69,17 +70,17 @@ if __name__ == '__main__':
     num_output = '02'
     print('Number of outputs: {}'.format(num_output))
 
-    val_send = '404b4c0000000000'
+    val_send = '8096980000000000'   # Little Endian FOrmat of 10,000,000 satoshis in hex
     print('Value to send: {}'.format(val_send))
 
-    scrpubkey_send = '1976a914507b27411ccf7f16f10297de6cef3f291623eddf88ac'
-    print('ScripPubKey for send: {}'.format(scrpubkey_send))
+    script_pub_key_send_to = '1976a914' + str(pub_key_send_to_hex.decode()) + '88ac'
+    print('ScripPubKey for send: {}'.format(script_pub_key_send_to))
 
-    val_return = '00093d0000000000'
-    print('Value to return (change): {}'.format(val_return))
+    val_change = 'd837470300000000'     # Little Endian FOrmat of 5,400,000 satoshis in hex
+    print('Value to return (change): {}'.format(val_change))
 
-    scrpubkey_return = '1976a914529bc0c79c396b62ecc31223702515484c626b1b88ac'
-    print('ScriptPubKey for return (change): {}'.format(scrpubkey_return))
+    scriptpubkey_change_addr = '1976a914' + str(pub_key_mine_hex.decode()) + '88ac'
+    print('ScriptPubKey for return (change): {}'.format(scriptpubkey_change_addr))
 
     locktime = '00000000'
     print('Locktime: {}'.format(locktime))
@@ -87,12 +88,12 @@ if __name__ == '__main__':
     sighash_all_presign = '01000000' # Required to be at end of transaction at signing time, removed after signing
     print('SIGHASH_ALL: {}'.format(sighash_all_presign))
 
-    tx_to_hash = (ver + num_input + prev_hash_le.decode() + prev_index + scriptpubkey_prev_tx + seq + num_output + val_send + scrpubkey_send + val_return + scrpubkey_return + locktime + sighash_all_presign)
+    tx_to_hash = (ver + num_input + prev_hash_le.decode() + prev_index + scriptpubkey_prev_tx + seq + num_output + val_send + script_pub_key_send_to + val_change + scriptpubkey_change_addr + locktime + sighash_all_presign)
 
     print(tx_to_hash)
 
     # Determine pubkey from secret
-    secret = 1
+    secret = 22334455
     x, y = (secret * g).pair()
     pub = g.__class__(g.curve(), x, y)
     hex_x = hex(x)
@@ -104,7 +105,7 @@ if __name__ == '__main__':
     # y % 2 # odd
 
     # compressed and y % 2 =1 so odd -> preprend 03
-    pub_key_mine = '03' + hex_x
+    pub_key_mine = '03' + hex_x #03 if odd and 02 if even
     print('Sec formatted pubkey: {}'.format(pub_key_mine))
     # sec_bin = unhexlify(sec)
     # h160 = hash160(sec_bin)
@@ -113,8 +114,8 @@ if __name__ == '__main__':
 
     # scriptSig, signing the above transaction
     # tx_to_hash = '0x' + tx_to_hash
-    tx_to_hash = bytes.fromhex(tx_to_hash)
-    print(tx_to_hash)
+    tx_to_hash = unhexlify(tx_to_hash)
+    print('Transaction to Hash: {}'.format(tx_to_hash))
     zraw = sha256(sha256(tx_to_hash).digest()).digest()
     print('Zraw: {}'.format(zraw))
 
@@ -123,7 +124,7 @@ if __name__ == '__main__':
 
     print('Secret: {}'.format(secret))
 
-    n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+    n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141  #CONSTANT
     print('n: {}'.format(n))
 
     k = randint(0, 2**256)
@@ -149,9 +150,9 @@ if __name__ == '__main__':
 
     # THE END
 
-    trans_hex = (ver + num_input + prev_hash_le.decode() + prev_index + prepend_byte_len_hex(prepend_byte_len_hex(s_sig.decode() + sighash_all_postsign) + prepend_byte_len_hex(pub_key_mine)) + seq + num_output + val_send + scrpubkey_send + val_return + scrpubkey_return + locktime)
+    trans_hex = (ver + num_input + prev_hash_le.decode() + prev_index + prepend_byte_len_hex(prepend_byte_len_hex(s_sig.decode() + sighash_all_postsign) + prepend_byte_len_hex(pub_key_mine)) + seq + num_output + val_send + script_pub_key_send_to + val_change + scriptpubkey_change_addr + locktime)
     print()
     print('Final transaction: {}'.format(trans_hex))
 
-    print(ver + '\n' + num_input + '\n' + prev_hash_le.decode() + '\n' + prev_index + '\n' + prepend_byte_len_hex(prepend_byte_len_hex(s_sig.decode() + sighash_all_postsign) + prepend_byte_len_hex(pub_key_mine)) + '\n' + seq + '\n' + num_output + '\n' + val_send + '\n' + scrpubkey_send + '\n' + val_return + '\n' + scrpubkey_return + '\n' + locktime)
+    print(ver + '\n' + num_input + '\n' + prev_hash_le.decode() + '\n' + prev_index + '\n' + prepend_byte_len_hex(prepend_byte_len_hex(s_sig.decode() + sighash_all_postsign) + prepend_byte_len_hex(pub_key_mine)) + '\n' + seq + '\n' + num_output + '\n' + val_send + '\n' + script_pub_key_send_to + '\n' + val_change + '\n' + scriptpubkey_change_addr + '\n' + locktime)
 
